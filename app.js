@@ -4,6 +4,12 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var User = require('./models/User.js');
+var passport = require('passport');
+var LocalStrategy = require('passport-local');
+var mongoose = require('mongoose');
+
+mongoose.connect('mongodb://localhost/authApp');
 
 var routes = require('./routes/index');
 var auth = require('./routes/auth');
@@ -21,6 +27,20 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+//middleware for express application for auth
+app.use(require('express-session')({
+  secret:"ThisISASecretKEYHere!!!",
+  resave:'false',
+  saveUnitialized: false
+}))
+app.use(passport.initialize());
+app.use(passport.session());
+
+//middleware taken by passport application
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 
 app.use('/', routes);
 app.use('/', auth);
